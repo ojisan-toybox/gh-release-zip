@@ -1,0 +1,28 @@
+name: Build doc
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+      - run: npm install
+      - run: npm run build
+      - run: |
+          echo "test-$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)" > TAG_NAME
+          echo "TAG_NAME=$(cat TAG_NAME)" >> $GITHUB_ENV
+          git tag $(cat TAG_NAME)
+          git push origin $(cat TAG_NAME)
+      - run: zip -r build public
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          files: |
+            build.zip
